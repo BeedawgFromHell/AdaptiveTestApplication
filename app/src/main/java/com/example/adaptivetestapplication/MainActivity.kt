@@ -1,6 +1,8 @@
 package com.example.adaptivetestapplication
 
+import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.view.GestureDetector
 import android.view.MotionEvent
@@ -14,6 +16,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.net.UnknownHostException
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -68,9 +71,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun setImages() {
         lifecycleScope.launchWhenCreated {
-            api.getImages().body()?.let { images ->
-                adapter?.submitList(images)
-                binding.swipeLayout.isRefreshing = false
+            val result =  try {
+                api.getImages()
+            } catch (e: Exception){
+                if(e is UnknownHostException) null
+                else throw RuntimeException(e)
+            }
+            if(result?.isSuccessful == true) {
+                result.body()?.let{ images ->
+                    adapter?.submitList(images)
+                    binding.swipeLayout.isRefreshing = false
+                }
             }
         }
 
